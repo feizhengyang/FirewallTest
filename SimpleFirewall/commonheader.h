@@ -1,5 +1,4 @@
 #pragma once
-#if 1
 #pragma warning(push)
 #pragma warning(disable: 4201) /// NAMELESS_STRUCT_UNION
 #pragma warning(disable: 4324) /// STRUCTURE_PADDED
@@ -10,11 +9,21 @@
 #include <Fwpsk.h>
 #include <stdlib.h>                   /// SDK\Inc\CRT
 #pragma warning(pop)
-
+#include "calloutguid.h"
 #include "callout.h"
-#else
-#include <wdm.h>
-#endif
 
-extern PDEVICE_OBJECT		g_pDevice;
-extern HANDLE				g_EngineHandle;
+// Macro
+#define DEVICE_NAME L"\\Device\\FirewallDevice"
+
+// Structure
+typedef struct _GLOBAL_VARIABLE {
+	PDEVICE_OBJECT		pDevice;
+	HANDLE				hEngineHandle;
+	UINT32				n32ConnectCalloutId;
+	UINT64				n64ConnectFilterId;
+	UINT32				n32RecvAcceptCalloutId;
+	UINT64				n64AcceptRecvFilterId;
+}GLOBAL_VARIABLE;
+
+// Global variable
+extern GLOBAL_VARIABLE global;

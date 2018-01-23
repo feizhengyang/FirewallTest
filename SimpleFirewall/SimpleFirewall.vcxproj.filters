@@ -17,13 +17,16 @@
       <UniqueIdentifier>{8E41214B-6785-4CFE-B992-037D68949A14}</UniqueIdentifier>
       <Extensions>inf;inv;inx;mof;mc;</Extensions>
     </Filter>
+    <Filter Include="Source Files\callout">
+      <UniqueIdentifier>{2cd9dc04-a420-4c67-8bfb-a77eb128ebe0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="driver.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="callout.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\callout</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -31,7 +34,10 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="callout.h">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\callout</Filter>
+    </ClInclude>
+    <ClInclude Include="calloutguid.h">
+      <Filter>Source Files\callout</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

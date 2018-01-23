@@ -1,11 +1,6 @@
 #include "commonheader.h"
 
-// Macro
-#define DEVICE_NAME L"\\Device\\FirewallDevice"
-
-// Global variable
-PDEVICE_OBJECT		g_pDevice;
-HANDLE				g_EngineHandle;
+GLOBAL_VARIABLE global;
 
 extern "C"
 {
@@ -49,7 +44,7 @@ DriverEntry(
 	if (!NT_SUCCESS(ntStatus))
 		goto ERROR_EXIT;
 
-	g_pDevice = pDevice;
+	global.pDevice = pDevice;
 
 	// start monitor
 	if (!NT_SUCCESS(ntStatus = FirewallRegisterCallouts()))
@@ -60,14 +55,14 @@ ERROR_EXIT:
 
 	if (!NT_SUCCESS(ntStatus))
 	{
-		// unregister 
+		// delete filter unregister callout
 		FirewallUnRegisterCallouts();
 
 		// delete device object
-		if (g_pDevice)
+		if (global.pDevice)
 		{
-			IoDeleteDevice(g_pDevice);
-			g_pDevice = NULL;
+			IoDeleteDevice(global.pDevice);
+			global.pDevice = NULL;
 		}
 	}
 
@@ -84,10 +79,13 @@ DriverUnload(
 
 	DbgPrint("fzy : -> DriverUnload\n");
 
-	if (g_pDevice)
+	// delete filter unregister callout
+	FirewallUnRegisterCallouts();
+
+	if (global.pDevice)
 	{
-		IoDeleteDevice(g_pDevice);
-		g_pDevice = NULL;
+		IoDeleteDevice(global.pDevice);
+		global.pDevice = NULL;
 	}
 
 	DbgPrint("fzy : <- DriverUnload\n");
