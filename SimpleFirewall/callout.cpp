@@ -179,7 +179,32 @@ FirewallALEConnectClassifyV1(
 	UNREFERENCED_PARAMETER(filter);
 	UNREFERENCED_PARAMETER(flowContext);
 	UNREFERENCED_PARAMETER(classifyOut);
-	DbgPrint("fzy : Connect classfy v1");
+
+	UINT32 localIpIndex, localPortIndex, remoteIpIndex, remotePortIndex, protocalIndex;
+
+	if (NT_SUCCESS(FirewallGetNetwork5TupleIndexesByLayerId(inFixedValues->layerId, 
+			&localIpIndex, &remoteIpIndex, &localPortIndex, &remotePortIndex, &protocalIndex)))
+	{
+		DbgPrint("fzy : Connect classfy local(0x%08x, %d) remote(0x%08x, %d) protocal(%d)\n", 
+			inFixedValues->incomingValue[localIpIndex].value.uint32,
+			inFixedValues->incomingValue[localPortIndex].value.uint32,
+			inFixedValues->incomingValue[remoteIpIndex].value.uint32,
+			inFixedValues->incomingValue[remotePortIndex].value.uint32,
+			inFixedValues->incomingValue[protocalIndex].value.uint32);
+
+		if (inFixedValues->incomingValue[protocalIndex].value.uint32 == IPPROTO_TCP &&
+			(	(inFixedValues->incomingValue[remoteIpIndex].value.uint32 & 0xffff) !=0xc0a80000
+				))
+		{
+			// block
+			if (classifyOut->rights & FWPS_RIGHT_ACTION_WRITE)
+			{
+				classifyOut->actionType = FWP_ACTION_BLOCK;
+				classifyOut->rights &= ~FWPS_RIGHT_ACTION_WRITE;
+			}
+		}
+	}
+
 }
 
 NTSTATUS NTAPI
@@ -226,8 +251,18 @@ FirewallALERecvAcceptClassifyV1(
 	UNREFERENCED_PARAMETER(filter);
 	UNREFERENCED_PARAMETER(flowContext);
 	UNREFERENCED_PARAMETER(classifyOut);
+	UINT32 localIpIndex, localPortIndex, remoteIpIndex, remotePortIndex, protocalIndex;
 
-	DbgPrint("fzy : Recv accept classfy v1");
+	if (NT_SUCCESS(FirewallGetNetwork5TupleIndexesByLayerId(inFixedValues->layerId,
+		&localIpIndex, &remoteIpIndex, &localPortIndex, &remotePortIndex, &protocalIndex)))
+	{
+		DbgPrint("fzy : Recv classfy local(0x%08x, %d) remote(0x%08x, %d) protocal(%d)\n",
+			inFixedValues->incomingValue[localIpIndex].value.uint32,
+			inFixedValues->incomingValue[localPortIndex].value.uint32,
+			inFixedValues->incomingValue[remoteIpIndex].value.uint32,
+			inFixedValues->incomingValue[remotePortIndex].value.uint32,
+			inFixedValues->incomingValue[protocalIndex].value.uint32);
+	}
 
 }
 
@@ -255,4 +290,54 @@ FirewallALERecvAcceptNotifyV1(
 	UNREFERENCED_PARAMETER(layerId);
 	UNREFERENCED_PARAMETER(calloutId);
 	UNREFERENCED_PARAMETER(flowContext);
+}
+
+NTSTATUS
+FirewallGetNetwork5TupleIndexesByLayerId(
+	IN UINT16 layerId,
+	OUT UINT* localAddressIndex,
+	OUT UINT* remoteAddressIndex,
+	OUT UINT* localPortIndex,
+	OUT UINT* remotePortIndex,
+	OUT UINT* protocolIndex
+) 
+{
+	NTSTATUS	ntStatus = STATUS_SUCCESS;
+	
+	switch (layerId)
+	{
+	case FWPS_LAYER_ALE_AUTH_CONNECT_V4:
+		*localAddressIndex = FWPS_FIELD_ALE_AUTH_CONNECT_V4_IP_LOCAL_ADDRESS;
+		*remoteAddressIndex = FWPS_FIELD_ALE_AUTH_CONNECT_V4_IP_REMOTE_ADDRESS;
+		*localPortIndex = FWPS_FIELD_ALE_AUTH_CONNECT_V4_IP_LOCAL_PORT;
+		*remotePortIndex = FWPS_FIELD_ALE_AUTH_CONNECT_V4_IP_REMOTE_PORT;
+		*protocolIndex = FWPS_FIELD_ALE_AUTH_CONNECT_V4_IP_PROTOCOL;
+		break;
+	case FWPS_LAYER_ALE_AUTH_CONNECT_V6:
+		*localAddressIndex = FWPS_FIELD_ALE_AUTH_CONNECT_V6_IP_LOCAL_ADDRESS;
+		*remoteAddressIndex = FWPS_FIELD_ALE_AUTH_CONNECT_V6_IP_REMOTE_ADDRESS;
+		*localPortIndex = FWPS_FIELD_ALE_AUTH_CONNECT_V6_IP_LOCAL_PORT;
+		*remotePortIndex = FWPS_FIELD_ALE_AUTH_CONNECT_V6_IP_REMOTE_PORT;
+		*protocolIndex = FWPS_FIELD_ALE_AUTH_CONNECT_V6_IP_PROTOCOL;
+		break;
+	case FWPS_LAYER_ALE_AUTH_RECV_ACCEPT_V4:
+		*localAddressIndex = FWPS_FIELD_ALE_AUTH_RECV_ACCEPT_V4_IP_LOCAL_ADDRESS;
+		*remoteAddressIndex = FWPS_FIELD_ALE_AUTH_RECV_ACCEPT_V4_IP_REMOTE_ADDRESS;
+		*localPortIndex = FWPS_FIELD_ALE_AUTH_RECV_ACCEPT_V4_IP_LOCAL_PORT;
+		*remotePortIndex = FWPS_FIELD_ALE_AUTH_RECV_ACCEPT_V4_IP_REMOTE_PORT;
+		*protocolIndex = FWPS_FIELD_ALE_AUTH_RECV_ACCEPT_V4_IP_PROTOCOL;
+		break;
+	case FWPS_LAYER_ALE_AUTH_RECV_ACCEPT_V6:
+		*localAddressIndex = FWPS_FIELD_ALE_AUTH_RECV_ACCEPT_V6_IP_LOCAL_ADDRESS;
+		*remoteAddressIndex = FWPS_FIELD_ALE_AUTH_RECV_ACCEPT_V6_IP_REMOTE_ADDRESS;
+		*localPortIndex = FWPS_FIELD_ALE_AUTH_RECV_ACCEPT_V6_IP_LOCAL_PORT;
+		*remotePortIndex = FWPS_FIELD_ALE_AUTH_RECV_ACCEPT_V6_IP_REMOTE_PORT;
+		*protocolIndex = FWPS_FIELD_ALE_AUTH_RECV_ACCEPT_V6_IP_PROTOCOL;
+		break;
+	default:
+		ntStatus = STATUS_INVALID_PARAMETER;
+		break;
+	}
+
+	return ntStatus;
 }

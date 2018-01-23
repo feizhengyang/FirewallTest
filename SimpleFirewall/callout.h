@@ -57,3 +57,14 @@ FirewallALERecvAcceptNotifyV1(
 	UINT32 calloutId,
 	UINT64 flowContext
 );
+
+// utility
+NTSTATUS
+FirewallGetNetwork5TupleIndexesByLayerId(
+	IN UINT16 layerId,
+	OUT UINT* localAddressIndex,
+	OUT UINT* remoteAddressIndex,
+	OUT UINT* localPortIndex,
+	OUT UINT* remotePortIndex,
+	OUT UINT* protocolIndex
+);
